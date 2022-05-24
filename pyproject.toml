@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "blab-deepage"
+version = "0.1.0"
+description = ""
+authors = ["C4AI"]
+readme = "README.md"
+#packages = [{include = "blab_deepage"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+datasets = "^2.2.2"
+transformers = {extras = ["torch"], version = "^4.19.2"}
+fsspec = "^2022.5.0"
+sentencepiece = "^0.1.96"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
