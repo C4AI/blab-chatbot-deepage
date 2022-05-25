@@ -1,4 +1,6 @@
 from datasets import DatasetDict, Dataset
+from datasets.utils import disable_progress_bar
+
 from transformers import T5Tokenizer
 from transformers import (
     AutoModelForSeq2SeqLM,
@@ -7,6 +9,8 @@ from transformers import (
     Seq2SeqTrainer,
 )
 
+
+disable_progress_bar()
 
 all_questions = [
     {
@@ -98,6 +102,8 @@ args = Seq2SeqTrainingArguments(
     predict_with_generate=True,
     # fp16=True,  # apparently this requires a GPU
     gradient_accumulation_steps=4,
+    disable_tqdm=True,
+    log_level="warning",
 )
 
 data_collator = DataCollatorForSeq2Seq(tokenizer, model=model)
