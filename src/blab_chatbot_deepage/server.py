@@ -13,6 +13,13 @@ from blab_chatbot_deepage.deepage_bot import DeepageBot
 app = Flask(__name__)
 
 
+class MessageType:
+    """Represents a message type."""
+
+    SYSTEM = "S"
+    TEXT = "T"
+
+
 @app.route("/", methods=["POST"])
 def conversation_start() -> None:
     """Answer POST requests.
@@ -39,7 +46,10 @@ def conversation_start() -> None:
             if not message.get("sent_by_human", False):
                 return
             # generate answers
-            answers = bot.answer(message["text"]) or []
+            if not message.get("type", None) == MessageType.TEXT:
+                answers = ["O DEEPAGÉ entende apenas mensagens de texto."]
+            else:
+                answers = bot.answer(message["text"]) or []
             for i, answer in enumerate(answers):
                 msg_type = "T"
                 local_id = str(uuid.uuid4()).replace("-", "")

@@ -29,18 +29,6 @@ getLogger().setLevel("INFO")
 logger = getLogger("deepage_bot")
 
 
-class MessageType:
-    """Represents a message type."""
-
-    SYSTEM = "S"
-    TEXT = "T"
-    VOICE = "V"
-    AUDIO = "a"
-    VIDEO = "v"
-    IMAGE = "i"
-    ATTACHMENT = "A"
-
-
 class DeepageBot:
     """A bot that usses Deepagé."""
 
