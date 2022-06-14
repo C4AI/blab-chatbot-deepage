@@ -1,10 +1,16 @@
-from collections import namedtuple
+from __future__ import annotations
+
+import csv
 from pathlib import Path
+from sys import maxsize
 from tempfile import TemporaryDirectory
-from typing import Any, NamedTuple, Callable
+from typing import Any, Callable
 
 from datasets import DatasetDict, Dataset
 from datasets.utils import disable_progress_bar
+from haystack import Pipeline
+from haystack.document_stores import ElasticsearchDocumentStore
+from haystack.nodes import ElasticsearchRetriever, PreProcessor
 
 from transformers import T5Tokenizer, IntervalStrategy
 from transformers import (
@@ -14,9 +20,25 @@ from transformers import (
     Seq2SeqTrainer,
 )
 
-from .controller_interface import ConversationInfo, Message, MessageType
+from logging import getLogger
+
 
 disable_progress_bar()
+
+getLogger().setLevel("INFO")
+logger = getLogger("deepage_bot")
+
+
+class MessageType:
+    """Represents a message type."""
+
+    SYSTEM = "S"
+    TEXT = "T"
+    VOICE = "V"
+    AUDIO = "a"
+    VIDEO = "v"
+    IMAGE = "i"
+    ATTACHMENT = "A"
 
 
 class DeepageBot:
@@ -24,16 +46,17 @@ class DeepageBot:
 
     def __init__(
         self,
-        conversation_info: ConversationInfo,
-        *,
         model_dir: str | Path,
+        idx_name: str,
+        answer_function: Callable[[dict[str, Any]], None],
         k_retrieval: int,
         max_input_length: int = 1024,
         max_target_length: int = 32,
     ):
         self.k_retrieval = k_retrieval
-        self.conversation_info = conversation_info
         self.model_dir = model_dir
+        self.idx_name = idx_name
+        self.answer_function = answer_function
         self.max_input_length = max_input_length
         self.max_target_length = max_target_length
 
@@ -64,7 +87,7 @@ class DeepageBot:
             tokenizer=self.tokenizer,
         )
 
-    def receive_message(self, message: Message) -> None:
+    def receive_message(self, message: dict[str, Any]) -> None:
         """Receive a message from the user or other bots.
 
         Messages from other bots are ignored.
@@ -72,13 +95,15 @@ class DeepageBot:
         Args:
             message: the received message
         """
-        if not message.sent_by_human():
+        if not message.get("sent_by_human", False):
             return
+        question = message["text"]
+
         q = [
             {
-                "question": [message.text],
+                "question": [question],
                 "answer": [""],
-                "documents": [],
+                "documents": self._find_relevant_documents(question)["documents"],
             },
         ]
         dataset_test = Dataset.from_dict(self._preprocess(q))
@@ -91,24 +116,31 @@ class DeepageBot:
         )
         for prediction in a.predictions:
             answer = self.tokenizer.decode(prediction, skip_special_tokens=True)
-            self.conversation_info.send_function(
-                {"type": MessageType.TEXT, "text": answer}
-            )
+            self.answer_function({"type": MessageType.TEXT, "text": answer})
+
+    def _find_relevant_documents(self, question: str):
+        document_store = ElasticsearchDocumentStore(index=self.idx_name)
+        retriever = ElasticsearchRetriever(document_store=document_store)
+        extractive_pipeline = Pipeline()
+        extractive_pipeline.add_node(
+            component=retriever, name="ESRetriever1", inputs=["Query"]
+        )
+        return extractive_pipeline.run(
+            query=question, params={"top_k": self.k_retrieval}
+        )
 
     def _preprocess(self, docs: list[dict[str, Any]]) -> dict[str, Any]:
         questions = []
-        answer = []
+        answers = []
         for instance in docs:
             question = "question: " + instance["question"][0]
             doc = []
-            for _i in range(min(self.k_retrieval, len(instance["documents"]))):
-                document_dict = {**instance["documents"][i]}
-                document = document_dict["meta"]["title"] + " " + document_dict["text"]
-                doc.append(document_dict["text"])
-                question += "  context: " + document
+            for d in instance["documents"][: self.k_retrieval]:
+                doc.append(d.content)
+                question += "  context: " + d.meta["title"] + " " + d.content
             questions.append(question)
-            answer.append(instance["answer"][0])
-        return {"question": questions, "answer": answer}
+            answers.append(instance["answer"][0])
+        return {"question": questions, "answer": answers}
 
     def _preprocess_input(self, examples):
         return self.tokenizer(
@@ -123,3 +155,45 @@ class DeepageBot:
         )
         model_inputs["labels"] = labels["input_ids"]
         return model_inputs
+
+    @classmethod
+    def index(
+        cls,
+        document: str | Path,
+        index_name: str,
+        max_words: int,
+        max_entries=maxsize,
+    ) -> None:
+        entries = []
+        logger.info("reading document")
+        with open(document, "r", encoding="utf-8") as fd:
+            reader = csv.reader(fd, delimiter="\t")
+            for row in reader:
+                if not row:
+                    continue
+                title, text = row
+                entries.append({"content": text, "meta": {"title": title}})
+                if len(entries) >= max_entries:
+                    logger.info("stopping after %d entries" % max_entries)
+                    break
+        logger.info("finished reading document with %d entries" % len(entries))
+        logger.info("pre-processing entries")
+        # noinspection PyArgumentEqualDefault
+        processor = PreProcessor(
+            clean_empty_lines=True,
+            clean_whitespace=True,
+            clean_header_footer=True,
+            split_by="word",
+            split_length=max_words,
+            split_respect_sentence_boundary=False,
+            split_overlap=0,
+        )
+        docs = processor.process(entries)
+        logger.info("opening Elasticsearch")
+        document_store = ElasticsearchDocumentStore(index=index_name)
+        existing = document_store.get_document_count()
+        if existing:
+            logger.info("deleting existing documents (%d)" % existing)
+            document_store.delete_documents()
+        logger.info("writing documents")
+        document_store.write_documents(docs, batch_size=1000)
