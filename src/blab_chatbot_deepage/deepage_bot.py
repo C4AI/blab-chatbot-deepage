@@ -13,7 +13,7 @@ from datasets import Dataset, DatasetDict
 from datasets.utils import disable_progress_bar
 from haystack import Document, Pipeline
 from haystack.document_stores import ElasticsearchDocumentStore
-from haystack.nodes import PreProcessor, BM25Retriever
+from haystack.nodes import BM25Retriever, PreProcessor
 from transformers import (
     AutoModelForSeq2SeqLM,
     DataCollatorForSeq2Seq,
