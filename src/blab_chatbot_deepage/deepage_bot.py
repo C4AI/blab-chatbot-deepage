@@ -13,7 +13,7 @@ from datasets import Dataset, DatasetDict
 from datasets.utils import disable_progress_bar
 from haystack import Document, Pipeline
 from haystack.document_stores import ElasticsearchDocumentStore
-from haystack.nodes import ElasticsearchRetriever, PreProcessor
+from haystack.nodes import PreProcessor, BM25Retriever
 from transformers import (
     AutoModelForSeq2SeqLM,
     DataCollatorForSeq2Seq,
@@ -124,7 +124,7 @@ class DeepageBot:
 
     def _find_relevant_documents(self, question: str) -> list[dict[str, Document]]:
         document_store = ElasticsearchDocumentStore(index=self.idx_name)
-        retriever = ElasticsearchRetriever(document_store=document_store)
+        retriever = BM25Retriever(document_store=document_store)
         extractive_pipeline = Pipeline()
         extractive_pipeline.add_node(
             component=retriever, name="ESRetriever1", inputs=["Query"]
