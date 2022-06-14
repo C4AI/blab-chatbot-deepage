@@ -1,27 +1,27 @@
+"""DEEPAGÉ bot for BLAB."""
+
 from __future__ import annotations
 
 import csv
+from logging import getLogger
 from pathlib import Path
 from sys import maxsize
 from tempfile import TemporaryDirectory
-from typing import Any, Callable
+from typing import Any
 
-from datasets import DatasetDict, Dataset
+from datasets import Dataset, DatasetDict
 from datasets.utils import disable_progress_bar
-from haystack import Pipeline
+from haystack import Document, Pipeline
 from haystack.document_stores import ElasticsearchDocumentStore
 from haystack.nodes import ElasticsearchRetriever, PreProcessor
-
-from transformers import T5Tokenizer, IntervalStrategy
 from transformers import (
     AutoModelForSeq2SeqLM,
     DataCollatorForSeq2Seq,
-    Seq2SeqTrainingArguments,
+    IntervalStrategy,
     Seq2SeqTrainer,
+    Seq2SeqTrainingArguments,
+    T5Tokenizer,
 )
-
-from logging import getLogger
-
 
 disable_progress_bar()
 
@@ -48,15 +48,22 @@ class DeepageBot:
         self,
         model_dir: str | Path,
         idx_name: str,
-        answer_function: Callable[[dict[str, Any]], None],
         k_retrieval: int,
         max_input_length: int = 1024,
         max_target_length: int = 32,
     ):
+        """.
+
+        Args:
+            model_dir: path to the model directory
+            idx_name: name of the Elasticsearch index to be used
+            k_retrieval: number of documents to retrieve per question
+            max_input_length: [to be defined]
+            max_target_length: [to be defined]
+        """
         self.k_retrieval = k_retrieval
         self.model_dir = model_dir
         self.idx_name = idx_name
-        self.answer_function = answer_function
         self.max_input_length = max_input_length
         self.max_target_length = max_target_length
 
@@ -87,24 +94,20 @@ class DeepageBot:
             tokenizer=self.tokenizer,
         )
 
-    def receive_message(self, message: dict[str, Any]) -> None:
-        """Receive a message from the user or other bots.
-
-        Messages from other bots are ignored.
+    def answer(self, question: str) -> list[str]:
+        """Answer a question.
 
         Args:
-            message: the received message
-        """
-        if not message.get("sent_by_human", False):
-            return
-        question = message["text"]
+            question:  the question to be answered
 
+        Returns:
+            the answer to the question
+        """
         q = [
             {
                 "question": [question],
-                "answer": [""],
                 "documents": self._find_relevant_documents(question)["documents"],
-            },
+            }
         ]
         dataset_test = Dataset.from_dict(self._preprocess(q))
         raw_datasets = DatasetDict({"test": dataset_test})
@@ -114,11 +117,12 @@ class DeepageBot:
         a = self.trainer.predict(
             tokenized_datasets["test"], max_length=self.max_target_length
         )
-        for prediction in a.predictions:
-            answer = self.tokenizer.decode(prediction, skip_special_tokens=True)
-            self.answer_function({"type": MessageType.TEXT, "text": answer})
+        return [
+            self.tokenizer.decode(prediction, skip_special_tokens=True)
+            for prediction in a.predictions
+        ]
 
-    def _find_relevant_documents(self, question: str):
+    def _find_relevant_documents(self, question: str) -> list[dict[str, Document]]:
         document_store = ElasticsearchDocumentStore(index=self.idx_name)
         retriever = ElasticsearchRetriever(document_store=document_store)
         extractive_pipeline = Pipeline()
@@ -139,15 +143,15 @@ class DeepageBot:
                 doc.append(d.content)
                 question += "  context: " + d.meta["title"] + " " + d.content
             questions.append(question)
-            answers.append(instance["answer"][0])
+            answers.append(instance.get("answer", [""])[0])
         return {"question": questions, "answer": answers}
 
-    def _preprocess_input(self, examples):
+    def _preprocess_input(self, examples: dict[str, Any]) -> dict[str, Any]:
         return self.tokenizer(
             examples["question"], max_length=self.max_input_length, truncation=True
         )
 
-    def _preprocess_function(self, examples):
+    def _preprocess_function(self, examples: dict[str, Any]) -> dict[str, Any]:
         model_inputs = self._preprocess_input(examples)
         # Setup the tokenizer for targets
         labels = self.tokenizer(
@@ -162,11 +166,22 @@ class DeepageBot:
         document: str | Path,
         index_name: str,
         max_words: int,
-        max_entries=maxsize,
+        max_entries: int = maxsize,
     ) -> None:
+        """
+        Index the entries in a document.
+
+        If an old index exists, it is deleted.
+
+        Args:
+            document: path of the document to be indexed
+            index_name: name of the Elasticsearch index
+            max_words: maximum number of words per document
+            max_entries: maximum number of entries to index
+        """
         entries = []
         logger.info("reading document")
-        with open(document, "r", encoding="utf-8") as fd:
+        with open(document, encoding="utf-8") as fd:
             reader = csv.reader(fd, delimiter="\t")
             for row in reader:
                 if not row:

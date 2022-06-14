@@ -1,10 +1,12 @@
+"""This module is called from the command-line."""
+
 import argparse
 import sys
 from configparser import ConfigParser
 from pathlib import Path
-from typing import Any, Dict
 
 from blab_chatbot_deepage.deepage_bot import DeepageBot
+from blab_chatbot_deepage.server import start_server
 
 directory = Path(__file__).parent.parent.parent
 
@@ -31,26 +33,22 @@ p = Path(args.config)
 if not p.is_file():
     print(f'Configuration file "{p}" not found.')
     sys.exit(1)
-config = ConfigParser()
-config.read(p)
-index_name = config["blab_chatboot_deepage"]["index_name"]
+cp = ConfigParser()
+cp.read(p)
+config = cp["blab_chatboot_deepage"]
+index_name = config["index_name"]
 
-model = Path(config["blab_chatboot_deepage"]["model"])
+model = Path(config["model"])
 if not model.is_absolute():
     model = directory / model
 
-document = Path(config["blab_chatboot_deepage"]["document"])
+document = Path(config["document"])
 if not document.is_absolute():
     document = directory / document
 
 if args.command == "answer":
-    answers = []
 
-    def answer_function(a: Dict[str, Any]):
-        print(a)
-        answers.append(a["text"])
-
-    bot = DeepageBot(model, index_name, answer_function, 10)
+    bot = DeepageBot(model, index_name, 10)
     print("TYPE YOUR QUESTION AND PRESS ENTER.")
     while True:
         try:
@@ -59,15 +57,12 @@ if args.command == "answer":
             question = ""
         if not question:
             break
-        bot.receive_message(
-            {
-                "type": "T",
-                "sent_by_human": True,
-                "text": question,
-            }
-        )
-        print(">> DEEPAGÉ: " + answers[-1])
+        for answer in bot.answer(question) or []:
+            print(">> DEEPAGÉ: " + answer)
 
 elif args.command == "index":
-    print(args)
     DeepageBot.index(document, index_name, args.max_words, max_entries=args.max_entries)
+
+elif args.command == "startserver":
+    bot = DeepageBot(model, index_name, 10)
+    start_server(host=config["server_host"], port=config.getint("server_port"), bot=bot)
