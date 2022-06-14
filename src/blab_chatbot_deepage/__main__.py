@@ -53,7 +53,7 @@ if args.command == "answer":
     while True:
         try:
             question = input(">> YOU: ")
-        except EOFError:
+        except (EOFError, KeyboardInterrupt):
             question = ""
         if not question:
             break
