@@ -30,7 +30,7 @@ logger = getLogger("deepage_bot")
 
 
 class DeepageBot:
-    """A bot that usses Deepagé."""
+    """A bot that uses DEEPAGÉ."""
 
     def __init__(
         self,
