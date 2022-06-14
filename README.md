@@ -82,16 +82,16 @@ This Python module allows the integration of [DEEPAGÉ](../../../deepage) with
   the `CHAT_INSTALLED_BOTS` dictionary to include the DEEPAGÉ settings.
   Example:
 
-```python
-CHAT_INSTALLED_BOTS.update(
-    {
-        'DEEPAGÉ': (
-            'chat.bots',
-            'WebSocketExternalBot',
-            ['http://localhost:25226/'],
-            {},
-        ),
-    }
-)
-
-```
+  ```python
+  CHAT_INSTALLED_BOTS.update(
+      {
+          'DEEPAGÉ': (
+              'chat.bots',
+              'WebSocketExternalBot',
+              ['http://localhost:25226/'],
+              {},
+          ),
+      }
+  )
+  
+  ```
