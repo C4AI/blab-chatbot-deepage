@@ -30,14 +30,14 @@ def conversation_start() -> None:
     # noinspection PyUnresolvedReferences
     bot: DeepageBot = app._BOT
 
-    def on_message(ws_app: WebSocketApp, m: Dict[str, Dict[str, Any]]) -> None:
+    def on_message(ws_app: WebSocketApp, m: str) -> None:
         """Send a message answering the question.
 
         This function is called when the WebSocket connection receives a message.
 
         Args:
             ws_app: the WebSocketApp instance
-            m: message or event
+            m: message or event (JSON-encoded)
         """
         contents = json.loads(m)
         if "message" in contents:

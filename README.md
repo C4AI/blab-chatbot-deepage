@@ -36,7 +36,7 @@ This Python module allows the integration of [DEEPAGÉ](../../../deepage) with
 
 - Create a file named *settings.ini* in the same directory as this *README.md* file and add the required fields as follows:
   ```ini
-  [blab_chatboot_deepage]
+  [blab_chatbot_deepage]
   index_name=name_of_the_index
   document=data/document.csv
   model=model/your-model-directory

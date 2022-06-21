@@ -35,7 +35,7 @@ if not p.is_file():
     sys.exit(1)
 cp = ConfigParser()
 cp.read(p)
-config = cp["blab_chatboot_deepage"]
+config = cp["blab_chatbot_deepage"]
 index_name = config["index_name"]
 
 model = Path(config["model"])
