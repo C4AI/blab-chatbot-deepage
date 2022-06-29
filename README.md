@@ -56,24 +56,25 @@ This Python module allows the integration of [DEEPAGÉ](../../../deepage) with
 
 - Start Elasticsearch.
 
-- Run `poetry shell` to open a sub-shell using the virtual environment. Alternatively, prefix the commands below with `poetry run `.
+- Optionally, run `poetry shell` to open a shell that uses the virtual environment, and
+  all the commands below can be executed on that shell without prefixing them with `poetry run`.
 
 - Enter the *src/* directory and create the index:
 
   ```shell
-  python -m blab_chatbot_deepage index
+  poetry run python -m blab_chatbot_deepage index
   ```
 
 - In order to open an interactive demo that answers questions, run:
 
   ```shell
-  python -m blab_chatbot_deepage answer
+  poetry run python -m blab_chatbot_deepage answer
   ```
 
 - In order to start the server that will interact with BLAB Controller, run:
 
   ```shell
-  python -m blab_chatbot_deepage startserver
+  poetry run python -m blab_chatbot_deepage startserver
   ```
 
 #### Integration with BLAB Controller
@@ -93,5 +94,5 @@ This Python module allows the integration of [DEEPAGÉ](../../../deepage) with
           ),
       }
   )
-  
+
   ```
