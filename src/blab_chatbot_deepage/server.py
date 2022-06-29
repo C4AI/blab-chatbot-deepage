@@ -5,7 +5,7 @@ import uuid
 from threading import Thread
 
 from flask import Flask, request
-from websocket import WebSocketApp  # type: ignore
+from websocket import WebSocketApp
 
 from blab_chatbot_deepage.deepage_bot import DeepageBot
 

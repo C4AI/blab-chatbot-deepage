@@ -125,11 +125,11 @@ class DeepageBot:
         questions = []
         answers = []
         for instance in docs:
-            question = "question: " + instance["question"][0]
+            question = "question: " + instance["question"][0] + " context: "
             doc = []
             for d in instance["documents"][: self.k_retrieval]:
                 doc.append(d.content)
-                question += "  context: " + d.meta["title"] + " " + d.content
+                question += " " + d.meta["title"] + " " + d.content
             questions.append(question)
             answers.append(instance.get("answer", [""])[0])
         return {"question": questions, "answer": answers}
