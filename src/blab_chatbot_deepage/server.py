@@ -3,7 +3,6 @@
 import json
 import uuid
 from threading import Thread
-from typing import Any, Dict
 
 from flask import Flask, request
 from websocket import WebSocketApp  # type: ignore
