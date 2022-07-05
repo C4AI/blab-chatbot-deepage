@@ -28,6 +28,7 @@ def conversation_start() -> None:
     """
     # noinspection PyUnresolvedReferences
     bot: DeepageBot = app._BOT
+    ws_url: str = app._WS_URL
 
     def on_message(ws_app: WebSocketApp, m: str) -> None:
         """Send a message answering the question.
@@ -81,7 +82,7 @@ def conversation_start() -> None:
         # send greeting message
         ws_app.send(json.dumps(greeting))
 
-    ws_url = "ws://localhost:8000/ws/chat/" + request.json["conversation_id"] + "/"
+    ws_url = ws_url + "/ws/chat/" + request.json["conversation_id"] + "/"
     ws = WebSocketApp(
         ws_url,
         on_message=on_message,
@@ -92,7 +93,7 @@ def conversation_start() -> None:
     return ""
 
 
-def start_server(host: str, port: int, bot: DeepageBot) -> None:
+def start_server(host: str, port: int, bot: DeepageBot, ws_url: str) -> None:
     """
     Start the HTTP server.
 
@@ -102,6 +103,9 @@ def start_server(host: str, port: int, bot: DeepageBot) -> None:
             0.0.0.0 to accept all connections)
         port: port to listen on
         bot: DEEPAGÉ bot
+        ws_url: URL of the WebSocket server which to connect to
+            once a conversation starts
     """
     app._BOT = bot
+    app._WS_URL = ws_url
     app.run(host=host, port=port)

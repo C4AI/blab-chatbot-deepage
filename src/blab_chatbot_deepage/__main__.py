@@ -65,4 +65,9 @@ elif args.command == "index":
 
 elif args.command == "startserver":
     bot = DeepageBot(model, index_name, 10)
-    start_server(host=config["server_host"], port=config.getint("server_port"), bot=bot)
+    start_server(
+        host=config["server_host"],
+        port=config.getint("server_port"),
+        bot=bot,
+        ws_url=config["ws_url"],
+    )
