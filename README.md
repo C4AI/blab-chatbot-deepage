@@ -26,12 +26,17 @@ This Python module allows the integration of [DEEPAGÉ](../../../deepage) with
   ```
   If *~/.local/bin* is not in `PATH`, add it as suggested by the output of Poetry installer.
 
-
 - In the root directory of the project (which contains this _README.md_ file)
   run Poetry to install the dependencies in a new virtual environment (_.venv_):
 
   ```shell
   POETRY_VIRTUALENVS_IN_PROJECT=true poetry install
+  ```
+
+  If errors are shown, install the following packages on your system and try again: 
+  
+  ```
+  libblas3 liblapack3 liblapack-dev libblas-dev gfortran libatlas-base-dev
   ```
 
 - Create a file named *settings.ini* in the same directory as this *README.md* file and add the required fields as follows:
