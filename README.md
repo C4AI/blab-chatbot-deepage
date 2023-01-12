@@ -17,7 +17,12 @@ This Python module allows the integration of [DEEPAGÉ](../../../deepage) with
   Each line should have a title and a text, separated by a tab character.
 
 - Install
-  [Python 3.8](https://www.python.org/downloads/release/python-380/). Other versions may not be supported.
+  [Python 3.8](https://www.python.org/downloads/release/python-380/).
+  Other versions may not be supported.
+
+- Make sure that [distutils](https://docs.python.org/3/library/distutils.html) is installed 
+  (e.g. the package `python3.8-distutils` in some Linux distributions). It should be possible
+  to execute `python3.8 -c 'import distutils; print("OK")'` without errors.
 
 - Install [Poetry](https://python-poetry.org/) (version 1.2 or newer):
 
