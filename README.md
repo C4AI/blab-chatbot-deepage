@@ -22,7 +22,7 @@ This Python module allows the integration of [DEEPAGÉ](../../../deepage) with
 - Install [Poetry](https://python-poetry.org/) (version 1.2 or newer):
 
   ```shell
-  curl -sSL https://install.python-poetry.org | python3 - --preview
+  curl -sSL https://install.python-poetry.org | python3 -
   ```
   If *~/.local/bin* is not in `PATH`, add it as suggested by the output of Poetry installer.
 
@@ -33,8 +33,8 @@ This Python module allows the integration of [DEEPAGÉ](../../../deepage) with
   POETRY_VIRTUALENVS_IN_PROJECT=true poetry install
   ```
 
-  If errors are shown, install the following packages on your system and try again: 
-  
+  If errors are shown, install the following packages on your system and try again:
+
   ```
   libblas3 liblapack3 liblapack-dev libblas-dev gfortran libatlas-base-dev
   ```
@@ -57,7 +57,10 @@ This Python module allows the integration of [DEEPAGÉ](../../../deepage) with
   The WebSocket URL is the controller address and must start with `ws://` or `wss://`
   (the same path used by the frontend).
 
-- Install Elasticsearch 7.10 - [see instructions](https://www.elastic.co/guide/en/elasticsearch/reference/current/targz.html). Other versions may not be supported.
+- Install Elasticsearch 7.10 - see instruction to install
+  [from a .tar.gz archive](https://www.elastic.co/guide/en/elasticsearch/reference/7.10/targz.html)
+  or [as a deamon](https://www.elastic.co/guide/en/elasticsearch/reference/7.10/deb.html).
+  Other versions may not be supported.
 
 - Start Elasticsearch.
 
