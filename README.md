@@ -3,7 +3,7 @@
 This Python module allows the integration of [DEEPAGÉ](../../../deepage) with
 [BLAB](../../../blab-controller).
 
-**Currently, only Python 3.8 is supported.**
+**Currently, the Python versions supported by this module are {_v_ | 3.8.1 ≤ _v_ < 3.9}.**
 <!-- At the time of writing, apparently the latest Haystack version requires
      an old version of Elasticsearch, which does not support Python 3.10 -->
 
@@ -16,9 +16,10 @@ This Python module allows the integration of [DEEPAGÉ](../../../deepage) with
 - Obtain the document containing the texts.
   Each line should have a title and a text, separated by a tab character.
 
-- Install
-  [Python 3.8](https://www.python.org/downloads/release/python-380/).
-  Other versions may not be supported.
+- Install a version of
+  [Python](https://www.python.org/downloads/release/python-3816/) between 3.8.1 (inclusive)
+  and 3.9 (exclusive).
+  Other versions are not supported.
 
 - Make sure that [distutils](https://docs.python.org/3/library/distutils.html) is installed 
   (e.g. the package `python3.8-distutils` in some Linux distributions). It should be possible

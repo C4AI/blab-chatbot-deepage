@@ -4,16 +4,23 @@ from __future__ import annotations
 
 import csv
 from logging import getLogger
-from pathlib import Path
-from sys import maxsize
 from tempfile import TemporaryDirectory
 from typing import Any
 
+from blab_chatbot_bot_client.conversation_websocket import (
+    WebSocketBotClientConversation,
+)
+from blab_chatbot_bot_client.data_structures import (
+    OutgoingMessage,
+    Message,
+    MessageType,
+)
 from datasets import Dataset, DatasetDict
 from datasets.utils import disable_progress_bar
 from haystack import Document, Pipeline
 from haystack.document_stores import ElasticsearchDocumentStore
 from haystack.nodes import BM25Retriever, PreProcessor
+from overrides import overrides
 from transformers import (
     AutoModelForSeq2SeqLM,
     DataCollatorForSeq2Seq,
@@ -23,38 +30,32 @@ from transformers import (
     T5Tokenizer,
 )
 
+from blab_chatbot_deepage.deepage_settings_format import (
+    BlabDeepageClientSettings,
+    DeepageSettings,
+)
+
 disable_progress_bar()
 
 getLogger().setLevel("INFO")
 logger = getLogger("deepage_bot")
 
 
-class DeepageBot:
+class DeepageBot(WebSocketBotClientConversation):
     """A bot that uses DEEPAGÉ."""
 
-    def __init__(
-        self,
-        model_dir: str | Path,
-        idx_name: str,
-        k_retrieval: int,
-        max_input_length: int = 1024,
-        max_target_length: int = 32,
-    ):
-        """.
+    settings: BlabDeepageClientSettings
+
+    def __init__(self, *args: Any, **kwargs: Any):
+        """
+        Create an instance.
 
         Args:
-            model_dir: path to the model directory
-            idx_name: name of the Elasticsearch index to be used
-            k_retrieval: number of documents to retrieve per question
-            max_input_length: [to be defined]
-            max_target_length: [to be defined]
+            args: positional arguments (passed to the parent class)
+            kwargs: keyword arguments (passed to the parent class)
         """
-        self.k_retrieval = k_retrieval
-        self.model_dir = model_dir
-        self.idx_name = idx_name
-        self.max_input_length = max_input_length
-        self.max_target_length = max_target_length
-
+        super().__init__(*args, **kwargs)
+        model_dir = self.settings.DEEPAGE_SETTINGS["MODEL_PATH"]
         self.tokenizer = T5Tokenizer.from_pretrained(model_dir)
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_dir)
 
@@ -82,19 +83,12 @@ class DeepageBot:
             tokenizer=self.tokenizer,
         )
 
-    def answer(self, question: str) -> list[str]:
-        """Answer a question.
-
-        Args:
-            question:  the question to be answered
-
-        Returns:
-            the answer to the question
-        """
+    @overrides
+    def generate_answer(self, message: Message) -> list[OutgoingMessage]:
         q = [
             {
-                "question": [question],
-                "documents": self._find_relevant_documents(question)["documents"],
+                "question": [message.text],
+                "documents": self._find_relevant_documents(message.text)["documents"],
             }
         ]
         dataset_test = Dataset.from_dict(self._preprocess(q))
@@ -103,22 +97,35 @@ class DeepageBot:
             lambda ex: self._preprocess_function(ex), batched=True
         )
         a = self.trainer.predict(
-            tokenized_datasets["test"], max_length=self.max_target_length
+            tokenized_datasets["test"],
+            max_length=self.settings.DEEPAGE_SETTINGS["MAX_TARGET_LENGTH"],
         )
         return [
-            self.tokenizer.decode(prediction, skip_special_tokens=True)
-            for prediction in a.predictions
+            *map(
+                lambda t: OutgoingMessage(
+                    type=MessageType.TEXT,
+                    text=t,
+                    local_id=self.generate_local_id(),
+                ),
+                map(
+                    lambda p: self.tokenizer.decode(p, skip_special_tokens=True),
+                    a.predictions,
+                ),
+            )
         ]
 
     def _find_relevant_documents(self, question: str) -> list[dict[str, Document]]:
-        document_store = ElasticsearchDocumentStore(index=self.idx_name)
+        document_store = ElasticsearchDocumentStore(
+            index=self.settings.DEEPAGE_SETTINGS["ES_INDEX_NAME"]
+        )
         retriever = BM25Retriever(document_store=document_store)
         extractive_pipeline = Pipeline()
         extractive_pipeline.add_node(
             component=retriever, name="ESRetriever1", inputs=["Query"]
         )
         return extractive_pipeline.run(
-            query=question, params={"top_k": self.k_retrieval}
+            query=question,
+            params={"top_k": self.settings.DEEPAGE_SETTINGS["K_RETRIEVAL"]},
         )
 
     def _preprocess(self, docs: list[dict[str, Any]]) -> dict[str, Any]:
@@ -127,7 +134,9 @@ class DeepageBot:
         for instance in docs:
             question = "question: " + instance["question"][0] + " context: "
             doc = []
-            for d in instance["documents"][: self.k_retrieval]:
+            for d in instance["documents"][
+                : self.settings.DEEPAGE_SETTINGS["K_RETRIEVAL"]
+            ]:
                 doc.append(d.content)
                 question += " " + d.meta["title"] + " " + d.content
             questions.append(question)
@@ -136,40 +145,37 @@ class DeepageBot:
 
     def _preprocess_input(self, examples: dict[str, Any]) -> dict[str, Any]:
         return self.tokenizer(
-            examples["question"], max_length=self.max_input_length, truncation=True
+            examples["question"],
+            max_length=self.settings.DEEPAGE_SETTINGS["MAX_INPUT_LENGTH"],
+            truncation=True,
         )
 
     def _preprocess_function(self, examples: dict[str, Any]) -> dict[str, Any]:
         model_inputs = self._preprocess_input(examples)
-        # Setup the tokenizer for targets
+        # Set up the tokenizer for targets
         labels = self.tokenizer(
-            examples["answer"], max_length=self.max_target_length, truncation=True
+            examples["answer"],
+            max_length=self.settings.DEEPAGE_SETTINGS["MAX_TARGET_LENGTH"],
+            truncation=True,
         )
         model_inputs["labels"] = labels["input_ids"]
         return model_inputs
 
     @classmethod
-    def index(
-        cls,
-        document: str | Path,
-        index_name: str,
-        max_words: int,
-        max_entries: int = maxsize,
-    ) -> None:
+    def index(cls, config: DeepageSettings, max_entries: int, max_words: int) -> None:
         """
         Index the entries in a document.
 
         If an old index exists, it is deleted.
 
         Args:
-            document: path of the document to be indexed
-            index_name: name of the Elasticsearch index
-            max_words: maximum number of words per document
+            config: settings for DEEPAGÉ
             max_entries: maximum number of entries to index
+            max_words: maximum number of words per document
         """
         entries = []
         logger.info("reading document")
-        with open(document, encoding="utf-8") as fd:
+        with open(config["CSV_DOCUMENT_PATH"], encoding="utf-8") as fd:
             reader = csv.reader(fd, delimiter="\t")
             for row in reader:
                 if not row:
@@ -193,7 +199,7 @@ class DeepageBot:
         )
         docs = processor.process(entries)
         logger.info("opening Elasticsearch")
-        document_store = ElasticsearchDocumentStore(index=index_name)
+        document_store = ElasticsearchDocumentStore(index=config["ES_INDEX_NAME"])
         existing = document_store.get_document_count()
         if existing:
             logger.info("deleting existing documents (%d)" % existing)
