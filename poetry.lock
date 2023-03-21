@@ -164,7 +164,7 @@ ws = ["flask (>=2.2.2,<3.0.0)", "waitress (>=2.1.2,<3.0.0)", "websocket-client (
 type = "git"
 url = "https://github.com/C4AI/blab-chatbot-bot-client.git"
 reference = "main"
-resolved_reference = "bb37942dd82eb4c07646dc3f5fdc6ae9a5f81b47"
+resolved_reference = "d36e3d2bf90f2563d89d37277331ca3cfdfb5624"
 
 [[package]]
 name = "black"
@@ -387,7 +387,7 @@ python-versions = "*"
 
 [[package]]
 name = "docstring-to-markdown"
-version = "0.11"
+version = "0.12"
 description = "On the fly conversion of Python docstrings to markdown"
 category = "dev"
 optional = false
@@ -2852,8 +2852,8 @@ docopt = [
     {file = "docopt-0.6.2.tar.gz", hash = "sha256:49b3a825280bd66b3aa83585ef59c4a8c82f2c8a522dbe754a8bc8d08c85c491"},
 ]
 docstring-to-markdown = [
-    {file = "docstring-to-markdown-0.11.tar.gz", hash = "sha256:5b1da2c89d9d0d09b955dec0ee111284ceadd302a938a03ed93f66e09134f9b5"},
-    {file = "docstring_to_markdown-0.11-py3-none-any.whl", hash = "sha256:01900aee1bc7fde5aacaf319e517a5e1d4f0bf04e401373c08d28fcf79bfb73b"},
+    {file = "docstring-to-markdown-0.12.tar.gz", hash = "sha256:40004224b412bd6f64c0f3b85bb357a41341afd66c4b4896709efa56827fb2bb"},
+    {file = "docstring_to_markdown-0.12-py3-none-any.whl", hash = "sha256:7df6311a887dccf9e770f51242ec002b19f0591994c4783be49d24cdc1df3737"},
 ]
 elasticsearch = [
     {file = "elasticsearch-7.17.9-py2.py3-none-any.whl", hash = "sha256:0e2454645dc00517dee4c6de3863411a9c5f1955d013c5fefa29123dadc92f98"},

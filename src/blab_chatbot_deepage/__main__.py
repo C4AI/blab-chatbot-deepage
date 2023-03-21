@@ -1,10 +1,14 @@
 """This module is called from the command-line."""
 from __future__ import annotations
 
+import argparse
 from sys import argv, maxsize
 from typing import Type, cast
 
 from blab_chatbot_bot_client.cli import BlabBotClientArgParser
+from blab_chatbot_bot_client.settings_format import BlabBotClientSettings
+from overrides import overrides
+
 from blab_chatbot_deepage.deepage_settings_format import BlabDeepageClientSettings
 
 from blab_chatbot_deepage.deepage_bot import DeepageBot
@@ -31,17 +35,19 @@ class DeepageBotClientArgParser(BlabBotClientArgParser):
             help="maximum number of words per entry",
         )
 
-    def parse_and_run(self, arguments: list[str] | None = None) -> bool:
-        a = self.arg_parser.parse_args(arguments)
-        cfg = cast(BlabDeepageClientSettings, self._load_config(a.config))
-        if a.command == "index":
+    @overrides
+    def run(
+        self, arguments: argparse.Namespace, settings: BlabBotClientSettings
+    ) -> bool:
+        cfg = cast(BlabDeepageClientSettings, settings)
+        if arguments.command == "index":
             self._client.index(
                 cfg.DEEPAGE_SETTINGS,
-                max_entries=a.max_entries,
-                max_words=a.max_words,
+                max_entries=arguments.max_entries,
+                max_words=arguments.max_words,
             )
             return True
-        return super().parse_and_run(arguments)
+        return super().run(arguments, settings)
 
 
 DeepageBotClientArgParser(DeepageBot).parse_and_run(argv[1:])
