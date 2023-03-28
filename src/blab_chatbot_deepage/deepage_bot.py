@@ -84,6 +84,12 @@ class DeepageBot(WebSocketBotClientConversation):
         )
 
     @overrides
+    def on_receive_message(self, message: Message) -> None:
+        if message.sent_by_human and message.type == MessageType.TEXT:
+            for answer in self.generate_answer(message):
+                self.enqueue_message(answer)
+
+    @overrides
     def generate_answer(self, message: Message) -> list[OutgoingMessage]:
         q = [
             {
@@ -106,6 +112,7 @@ class DeepageBot(WebSocketBotClientConversation):
                     type=MessageType.TEXT,
                     text=t,
                     local_id=self.generate_local_id(),
+                    quoted_message_id=message.id,
                 ),
                 map(
                     lambda p: self.tokenizer.decode(p, skip_special_tokens=True),
