@@ -13,18 +13,19 @@ class DeepageSettings(TypedDict):
     """Name of the Elasticsearch index to be used"""
 
     CSV_DOCUMENT_PATH: str
+    """Path to the document file"""
 
     MODEL_PATH: str
     """Path to the model directory"""
 
     MAX_INPUT_LENGTH: int
-    """"""
+    """Maximum truncation length"""
 
     MAX_TARGET_LENGTH: int
-    """"""
+    """Maximum target length"""
 
     K_RETRIEVAL: int
-    """"""
+    """The number of documents that the retriever should find"""
 
 
 @runtime_checkable
