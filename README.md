@@ -47,4 +47,10 @@ This Python module allows the integration of [DEEPAGÉ](../../../deepage) with
   ```
 
 - Follow [these instructions](../../../blab-chatbot-bot-client/blob/main/RUN.md) to execute the
-  program.
+  program. The addition to your controller settings can be:
+
+  ```python
+  CHAT_INSTALLED_BOTS.update({
+      "DEEPAGÉ": websocket_external_bot(url="http://localhost:25226"),
+  })
+  ```
