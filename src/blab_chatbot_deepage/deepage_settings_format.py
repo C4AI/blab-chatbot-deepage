@@ -1,3 +1,5 @@
+"""Defines the expected format of the configuration file."""
+
 from typing import Protocol, TypedDict, runtime_checkable
 
 from blab_chatbot_bot_client.settings_format import BlabBotClientSettings
@@ -30,4 +32,6 @@ class DeepageSettings(TypedDict):
 
 @runtime_checkable
 class BlabDeepageClientSettings(BlabBotClientSettings, Protocol):
+    """An extension of BlabBotClientSettings including DEEPAGÉ-specific settings."""
+
     DEEPAGE_SETTINGS: DeepageSettings

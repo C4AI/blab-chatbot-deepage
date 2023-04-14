@@ -11,9 +11,11 @@ This Python module allows the integration of [DEEPAGÉ](../../../deepage) with
 
 - Obtain the trained DEEPAGÉ model.
   It should be a directory containing files such as *pytorch_model.bin* and *optimizer.pt*.
+  If you don't have access to the model, please contact the authors of DEEPAGÉ.
 
 - Obtain the document containing the texts.
   Each line should have a title and a text, separated by a tab character.
+  If you don't have access to the documents, please contact the authors of DEEPAGÉ.
 
 - Install a version of
   [Python](https://www.python.org/downloads/release/python-3816/) between 3.8.1 (inclusive)

@@ -3,21 +3,27 @@ from __future__ import annotations
 
 import argparse
 from sys import argv, maxsize
-from typing import Type, cast
+from typing import cast
 
 from blab_chatbot_bot_client.cli import BlabBotClientArgParser
 from blab_chatbot_bot_client.settings_format import BlabBotClientSettings
 from overrides import overrides
 
-from blab_chatbot_deepage.deepage_settings_format import BlabDeepageClientSettings
-
 from blab_chatbot_deepage.deepage_bot import DeepageBot
+from blab_chatbot_deepage.deepage_settings_format import BlabDeepageClientSettings
 
 
 class DeepageBotClientArgParser(BlabBotClientArgParser):
-    _client: Type[DeepageBot]
+    """A BlabBotClientArgParser subclass that includes the extra command `index`."""
 
-    def __init__(self, client: Type[DeepageBot]):
+    _client: type[DeepageBot]
+
+    def __init__(self, client: type[DeepageBot]):
+        """Create an instance of the argument parser using the specified bot type.
+
+        Args:
+            client: DeepageBot or a subclass
+        """
         super().__init__(client)
         index_parser = self.subparsers.add_parser(
             "index", help="index document entries"

@@ -5,15 +5,15 @@ from __future__ import annotations
 import csv
 from logging import getLogger
 from tempfile import TemporaryDirectory
-from typing import Any
+from typing import Any, List, cast
 
 from blab_chatbot_bot_client.conversation_websocket import (
     WebSocketBotClientConversation,
 )
 from blab_chatbot_bot_client.data_structures import (
-    OutgoingMessage,
     Message,
     MessageType,
+    OutgoingMessage,
 )
 from datasets import Dataset, DatasetDict
 from datasets.utils import disable_progress_bar
@@ -23,6 +23,7 @@ from haystack.nodes import BM25Retriever, PreProcessor
 from overrides import overrides
 from transformers import (
     AutoModelForSeq2SeqLM,
+    BatchEncoding,
     DataCollatorForSeq2Seq,
     IntervalStrategy,
     Seq2SeqTrainer,
@@ -91,10 +92,12 @@ class DeepageBot(WebSocketBotClientConversation):
 
     @overrides
     def generate_answer(self, message: Message) -> list[OutgoingMessage]:
+        if not message.text:
+            return []
         q = [
             {
                 "question": [message.text],
-                "documents": self._find_relevant_documents(message.text)["documents"],
+                "documents": self._find_relevant_documents(message.text),
             }
         ]
         dataset_test = Dataset.from_dict(self._preprocess(q))
@@ -102,26 +105,24 @@ class DeepageBot(WebSocketBotClientConversation):
         tokenized_datasets = raw_datasets.map(
             lambda ex: self._preprocess_function(ex), batched=True
         )
-        a = self.trainer.predict(
+        predictions = self.trainer.predict(
             tokenized_datasets["test"],
             max_length=self.settings.DEEPAGE_SETTINGS["MAX_TARGET_LENGTH"],
-        )
+        ).predictions
+        decoded_predictions = [
+            self.tokenizer.decode(p, skip_special_tokens=True) for p in predictions
+        ]
         return [
-            *map(
-                lambda t: OutgoingMessage(
-                    type=MessageType.TEXT,
-                    text=t,
-                    local_id=self.generate_local_id(),
-                    quoted_message_id=message.id,
-                ),
-                map(
-                    lambda p: self.tokenizer.decode(p, skip_special_tokens=True),
-                    a.predictions,
-                ),
+            OutgoingMessage(
+                type=MessageType.TEXT,
+                text=t,
+                local_id=self.generate_local_id(),
+                quoted_message_id=message.id,
             )
+            for t in decoded_predictions
         ]
 
-    def _find_relevant_documents(self, question: str) -> list[dict[str, Document]]:
+    def _find_relevant_documents(self, question: str) -> list[Document]:
         document_store = ElasticsearchDocumentStore(
             index=self.settings.DEEPAGE_SETTINGS["ES_INDEX_NAME"]
         )
@@ -130,9 +131,12 @@ class DeepageBot(WebSocketBotClientConversation):
         extractive_pipeline.add_node(
             component=retriever, name="ESRetriever1", inputs=["Query"]
         )
-        return extractive_pipeline.run(
-            query=question,
-            params={"top_k": self.settings.DEEPAGE_SETTINGS["K_RETRIEVAL"]},
+        return cast(
+            List[Document],
+            extractive_pipeline.run(
+                query=question,
+                params={"top_k": self.settings.DEEPAGE_SETTINGS["K_RETRIEVAL"]},
+            )["documents"],
         )
 
     def _preprocess(self, docs: list[dict[str, Any]]) -> dict[str, Any]:
@@ -150,14 +154,17 @@ class DeepageBot(WebSocketBotClientConversation):
             answers.append(instance.get("answer", [""])[0])
         return {"question": questions, "answer": answers}
 
-    def _preprocess_input(self, examples: dict[str, Any]) -> dict[str, Any]:
-        return self.tokenizer(
-            examples["question"],
-            max_length=self.settings.DEEPAGE_SETTINGS["MAX_INPUT_LENGTH"],
-            truncation=True,
+    def _preprocess_input(self, examples: dict[str, Any]) -> BatchEncoding:
+        return cast(
+            BatchEncoding,
+            self.tokenizer(
+                examples["question"],
+                max_length=self.settings.DEEPAGE_SETTINGS["MAX_INPUT_LENGTH"],
+                truncation=True,
+            ),
         )
 
-    def _preprocess_function(self, examples: dict[str, Any]) -> dict[str, Any]:
+    def _preprocess_function(self, examples: dict[str, Any]) -> BatchEncoding:
         model_inputs = self._preprocess_input(examples)
         # Set up the tokenizer for targets
         labels = self.tokenizer(
