@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
+from blab_chatbot_bot_client.settings_format import BlabWebSocketConnectionSettings
+
+from blab_chatbot_deepage.deepage_settings_format import DeepageSettings
+
 # fmt: off
 
-BLAB_CONNECTION_SETTINGS: dict[str, str | int] = {
+BLAB_CONNECTION_SETTINGS: BlabWebSocketConnectionSettings = {
 
     # Address of the (usually local) HTTP server that the controller will connect to:
     "BOT_HTTP_SERVER_HOSTNAME": "localhost",
@@ -17,7 +21,7 @@ BLAB_CONNECTION_SETTINGS: dict[str, str | int] = {
 
 }
 
-DEEPAGE_SETTINGS: dict[str, str | int] = {
+DEEPAGE_SETTINGS: DeepageSettings = {
 
     # Text sent in the first message:
     "GREETING_TEXT": "Hey!",
