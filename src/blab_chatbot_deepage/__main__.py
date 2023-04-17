@@ -9,7 +9,7 @@ from blab_chatbot_bot_client.cli import BlabBotClientArgParser
 from blab_chatbot_bot_client.settings_format import BlabBotClientSettings
 from overrides import overrides
 
-from blab_chatbot_deepage.deepage_bot import DeepageBot
+from blab_chatbot_deepage.conversation_deepage import DeepageBot
 from blab_chatbot_deepage.deepage_settings_format import BlabDeepageClientSettings
 
 
