@@ -2,7 +2,7 @@
 
 from typing import Protocol, TypedDict, runtime_checkable
 
-from blab_chatbot_bot_client.settings_format import BlabBotClientSettings
+from blab_chatbot_bot_client.settings_format import BlabWebSocketBotClientSettings
 
 
 class DeepageSettings(TypedDict):
@@ -31,7 +31,8 @@ class DeepageSettings(TypedDict):
 
 
 @runtime_checkable
-class BlabDeepageClientSettings(BlabBotClientSettings, Protocol):
+class BlabDeepageClientSettings(BlabWebSocketBotClientSettings, Protocol):
     """An extension of BlabBotClientSettings including DEEPAGÉ-specific settings."""
 
     DEEPAGE_SETTINGS: DeepageSettings
+    """Settings for DEEPAGÉ"""

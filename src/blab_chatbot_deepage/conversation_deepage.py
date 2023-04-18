@@ -42,10 +42,8 @@ getLogger().setLevel("INFO")
 logger = getLogger("deepage_bot")
 
 
-class DeepageBot(WebSocketBotClientConversation):
+class DeepageBot(WebSocketBotClientConversation[BlabDeepageClientSettings]):
     """A bot that uses DEEPAGÉ."""
-
-    settings: BlabDeepageClientSettings
 
     def __init__(self, *args: Any, **kwargs: Any):
         """

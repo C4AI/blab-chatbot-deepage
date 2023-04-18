@@ -13,13 +13,13 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.8,>=3.8.1,<3.9"
 datasets = "^2.2.2"
-transformers = {extras = ["torch"], version = "^4.25.1"}
+transformers = { extras = ["torch"], version = "^4.25.1" }
 fsspec = "^2022.5.0"
 sentencepiece = "^0.1.96"
 farm-haystack = "^1.14.0"
 numpy = "<1.24"
 python-magic = "^0.4.27"
-blab-chatbot-bot-client = {extras = ["ws"], git = "https://github.com/C4AI/blab-chatbot-bot-client.git", branch = "main"}
+blab-chatbot-bot-client = { extras = ["ws"], git = "https://github.com/C4AI/blab-chatbot-bot-client.git", branch = "main" }
 
 
 [tool.poetry.group.dev.dependencies]
@@ -31,5 +31,5 @@ flake8-docstrings = "*"
 flake8-bugbear = "*"
 python-lsp-server = { extras = ["all"], version = "*" }
 pyupgrade = "*"
-mypy = "^0.931"
+mypy = "^1.2.0"
 pre-commit = "^2.18.1"
