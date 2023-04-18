@@ -32,7 +32,7 @@ This Python module allows the integration of [DEEPAGÉ](../../../deepage) with
   Other versions may not be supported.
 
 - Follow [these installation instructions](../../../blab-chatbot-bot-client/blob/main/INSTALL.md)
-  using [*settings_deepage_template.py*](settings_deepage_TEMPLATE.py) as a template.
+  using [*settings_deepage_TEMPLATE.py*](settings_deepage_TEMPLATE.py) as a template.
 
   If errors are shown, install the following packages on your system and try again:
 
