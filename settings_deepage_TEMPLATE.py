@@ -1,10 +1,13 @@
-"""This module contains settings for DEEPAGÉ Bot client."""
+"""A module that contains settings for DEEPAGÉ Bot client."""
 
 from __future__ import annotations
 
-from blab_chatbot_bot_client.settings_format import BlabWebSocketConnectionSettings
+from typing import TYPE_CHECKING
 
-from blab_chatbot_deepage.deepage_settings_format import DeepageSettings
+if TYPE_CHECKING:
+    from blab_chatbot_bot_client.settings_format import BlabWebSocketConnectionSettings
+
+    from blab_chatbot_deepage.deepage_settings_format import DeepageSettings
 
 # fmt: off
 

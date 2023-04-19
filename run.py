@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""This script can be used to run the main module."""
+"""A script that can be used to run the main module."""
 
 from pathlib import Path
 from runpy import run_path

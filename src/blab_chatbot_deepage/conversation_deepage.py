@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 from logging import getLogger
+from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, List, cast
 
@@ -46,10 +47,10 @@ class DeepageBot(WebSocketBotClientConversation[BlabDeepageClientSettings]):
     """A bot that uses DEEPAGÉ."""
 
     def __init__(self, *args: Any, **kwargs: Any):
-        """
-        Create an instance.
+        """Create an instance.
 
         Args:
+        ----
             args: positional arguments (passed to the parent class)
             kwargs: keyword arguments (passed to the parent class)
         """
@@ -175,19 +176,19 @@ class DeepageBot(WebSocketBotClientConversation[BlabDeepageClientSettings]):
 
     @classmethod
     def index(cls, config: DeepageSettings, max_entries: int, max_words: int) -> None:
-        """
-        Index the entries in a document.
+        """Index the entries in a document.
 
         If an old index exists, it is deleted.
 
         Args:
+        ----
             config: settings for DEEPAGÉ
             max_entries: maximum number of entries to index
             max_words: maximum number of words per document
         """
         entries = []
         logger.info("reading document")
-        with open(config["CSV_DOCUMENT_PATH"], encoding="utf-8") as fd:
+        with Path(config["CSV_DOCUMENT_PATH"]).open(encoding="utf-8") as fd:
             reader = csv.reader(fd, delimiter="\t")
             for row in reader:
                 if not row:
@@ -195,9 +196,12 @@ class DeepageBot(WebSocketBotClientConversation[BlabDeepageClientSettings]):
                 title, text = row
                 entries.append({"content": text, "meta": {"title": title}})
                 if len(entries) >= max_entries:
-                    logger.info("stopping after %d entries" % max_entries)
+                    logger.info("stopping after {n} entries", extra={"n": max_entries})
                     break
-        logger.info("finished reading document with %d entries" % len(entries))
+        logger.info(
+            "finished reading document with {n} entries",
+            extra={"n": len(entries)},
+        )
         logger.info("pre-processing entries")
         # noinspection PyArgumentEqualDefault
         processor = PreProcessor(
@@ -214,7 +218,7 @@ class DeepageBot(WebSocketBotClientConversation[BlabDeepageClientSettings]):
         document_store = ElasticsearchDocumentStore(index=config["ES_INDEX_NAME"])
         existing = document_store.get_document_count()
         if existing:
-            logger.info("deleting existing documents (%d)" % existing)
+            logger.info("deleting existing documents ({n})", extra={"n": existing})
             document_store.delete_documents()
         logger.info("writing documents")
         document_store.write_documents(docs, batch_size=1000)

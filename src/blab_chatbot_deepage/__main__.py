@@ -1,12 +1,15 @@
-"""This module is called from the command-line."""
+"""A module that is called from the command-line."""
 from __future__ import annotations
 
-import argparse
+from typing import TYPE_CHECKING, cast
+
+if TYPE_CHECKING:
+    import argparse
+    from blab_chatbot_bot_client.settings_format import BlabBotClientSettings
+
 from sys import argv, maxsize
-from typing import cast
 
 from blab_chatbot_bot_client.cli import BlabBotClientArgParser
-from blab_chatbot_bot_client.settings_format import BlabBotClientSettings
 from overrides import overrides
 
 from blab_chatbot_deepage.conversation_deepage import DeepageBot
@@ -22,6 +25,7 @@ class DeepageBotClientArgParser(BlabBotClientArgParser):
         """Create an instance of the argument parser using the specified bot type.
 
         Args:
+        ----
             client: DeepageBot or a subclass
         """
         super().__init__(client)
