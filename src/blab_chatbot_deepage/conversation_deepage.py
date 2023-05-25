@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+from functools import lru_cache
 from logging import getLogger
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -30,6 +31,8 @@ from transformers import (
     Seq2SeqTrainer,
     Seq2SeqTrainingArguments,
     T5Tokenizer,
+    PreTrainedModel,
+    PreTrainedTokenizer,
 )
 
 from blab_chatbot_deepage.deepage_settings_format import (
@@ -46,18 +49,13 @@ logger = getLogger("deepage_bot")
 class DeepageBot(WebSocketBotClientConversation[BlabDeepageClientSettings]):
     """A bot that uses DEEPAGÉ."""
 
-    def __init__(self, *args: Any, **kwargs: Any):
-        """Create an instance.
-
-        Args:
-        ----
-            args: positional arguments (passed to the parent class)
-            kwargs: keyword arguments (passed to the parent class)
-        """
-        super().__init__(*args, **kwargs)
-        model_dir = self.settings.DEEPAGE_SETTINGS["MODEL_PATH"]
-        self.tokenizer = T5Tokenizer.from_pretrained(model_dir)
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_dir)
+    @classmethod
+    @lru_cache
+    def _load_model(
+        cls, model_dir: str
+    ) -> tuple[PreTrainedTokenizer, PreTrainedModel, Seq2SeqTrainer]:
+        tokenizer = T5Tokenizer.from_pretrained(model_dir)
+        model = AutoModelForSeq2SeqLM.from_pretrained(model_dir)
 
         output_dir = TemporaryDirectory().name
         # apparently this is not used in this case, but the argument is required
@@ -75,13 +73,27 @@ class DeepageBot(WebSocketBotClientConversation[BlabDeepageClientSettings]):
             log_level="warning",
         )
 
-        data_collator = DataCollatorForSeq2Seq(self.tokenizer, model=self.model)
-        self.trainer = Seq2SeqTrainer(
-            self.model,
+        data_collator = DataCollatorForSeq2Seq(tokenizer, model=model)
+        trainer = Seq2SeqTrainer(
+            model,
             args,
             data_collator=data_collator,
-            tokenizer=self.tokenizer,
+            tokenizer=tokenizer,
         )
+
+        return tokenizer, model, trainer
+
+    def __init__(self, *args: Any, **kwargs: Any):
+        """Create an instance.
+
+        Args:
+        ----
+            args: positional arguments (passed to the parent class)
+            kwargs: keyword arguments (passed to the parent class)
+        """
+        super().__init__(*args, **kwargs)
+        model_dir = self.settings.DEEPAGE_SETTINGS["MODEL_PATH"]
+        self.tokenizer, self.model, self.trainer = self._load_model(model_dir)
 
     @overrides
     def on_receive_message(self, message: Message) -> None:
