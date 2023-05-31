@@ -56,3 +56,7 @@ This Python module allows the integration of [DEEPAGÉ](../../../deepage) with
       "DEEPAGÉ": websocket_external_bot(url="http://localhost:25226"),
   })
   ```
+
+Documentation for the code and its API is hosted
+[on GitHub Pages](https://c4ai.github.io/blab-chatbot-deepage/)
+alongside instructions on how to generate it locally.

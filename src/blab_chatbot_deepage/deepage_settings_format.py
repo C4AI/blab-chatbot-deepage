@@ -32,7 +32,7 @@ class DeepageSettings(TypedDict):
 
 @runtime_checkable
 class BlabDeepageClientSettings(BlabWebSocketBotClientSettings, Protocol):
-    """An extension of BlabBotClientSettings including DEEPAGÉ-specific settings."""
+    """An extension of ``BlabBotClientSettings`` including DEEPAGÉ-specific settings."""
 
     DEEPAGE_SETTINGS: DeepageSettings
     """Settings for DEEPAGÉ"""

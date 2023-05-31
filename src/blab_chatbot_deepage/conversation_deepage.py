@@ -28,11 +28,11 @@ from transformers import (
     BatchEncoding,
     DataCollatorForSeq2Seq,
     IntervalStrategy,
+    PreTrainedModel,
+    PreTrainedTokenizer,
     Seq2SeqTrainer,
     Seq2SeqTrainingArguments,
     T5Tokenizer,
-    PreTrainedModel,
-    PreTrainedTokenizer,
 )
 
 from blab_chatbot_deepage.deepage_settings_format import (
@@ -87,7 +87,6 @@ class DeepageBot(WebSocketBotClientConversation[BlabDeepageClientSettings]):
         """Create an instance.
 
         Args:
-        ----
             args: positional arguments (passed to the parent class)
             kwargs: keyword arguments (passed to the parent class)
         """
@@ -193,7 +192,6 @@ class DeepageBot(WebSocketBotClientConversation[BlabDeepageClientSettings]):
         If an old index exists, it is deleted.
 
         Args:
-        ----
             config: settings for DEEPAGÉ
             max_entries: maximum number of entries to index
             max_words: maximum number of words per document

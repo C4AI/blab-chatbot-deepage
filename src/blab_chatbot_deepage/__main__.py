@@ -17,7 +17,7 @@ from blab_chatbot_deepage.deepage_settings_format import BlabDeepageClientSettin
 
 
 class DeepageBotClientArgParser(BlabBotClientArgParser):
-    """A BlabBotClientArgParser subclass that includes the extra command `index`."""
+    """A BlabBotClientArgParser subclass that includes the extra command ``index``."""
 
     _client: type[DeepageBot]
 
@@ -25,7 +25,6 @@ class DeepageBotClientArgParser(BlabBotClientArgParser):
         """Create an instance of the argument parser using the specified bot type.
 
         Args:
-        ----
             client: DeepageBot or a subclass
         """
         super().__init__(client)
